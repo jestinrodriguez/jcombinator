@@ -9,11 +9,14 @@ import { Send } from "lucide-react";
 import { formSchema } from "@/lib/validation";
 import { z } from "zod";
 import { useToast } from "@/hooks/use-toast";
+import { createPitch } from "@/lib/actions";
+import { useRouter } from "next/navigation";
 
 const StartupForm = () => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [pitch, setPitch] = useState("");
   const { toast } = useToast();
+  const router = useRouter();
 
   const handleFormSubmit = async (prevState: any, formData: FormData) => {
     try {
@@ -21,12 +24,22 @@ const StartupForm = () => {
             title: formData.get("title") as string,
             description: formData.get("description") as string,
             category: formData.get("category") as string,
-            link: formData.get("pitch") as string,
+            link: formData.get("link") as string,
             pitch
         }
         await formSchema.parseAsync(formValues);
-        // const result = await createIdea(prevState, formData, pitch);
-        console.log(formValues);
+        const result = await createPitch(prevState, formData, pitch);
+
+
+        if(result.status === "SUCCESS") {
+          toast({
+            title: "Success",
+            description: "Your startup pitch has been created successfully,"
+          });
+
+          router.push(`/startup/${result._id}`);
+        }
+
     } catch (error){
         if(error instanceof z.ZodError){
             const fieldErrors = error.flatten().fieldErrors;
@@ -123,7 +136,7 @@ const StartupForm = () => {
       </div>
       <div data-color-mode="light">
         <label htmlFor="pitch" className="startup-form_label">
-          Image URL
+          Pitch
         </label>
         <MDEditor
           value={pitch}
